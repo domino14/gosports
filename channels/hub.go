@@ -2,48 +2,78 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package channels
+
+type Message struct {
+	Data    string `json:"data"`
+	Mtype   string `json:"type"`
+	rawdata []byte
+	room    string // This will get copied from the subscription.
+}
+
+type subscription struct {
+	conn *connection
+	room string
+}
 
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
 type hub struct {
 	// Registered connections.
-	connections map[*connection]bool
+	rooms map[string]map[*connection]bool
 
 	// Inbound messages from the connections.
-	broadcast chan []byte
+	broadcast chan Message
 
 	// Register requests from the connections.
-	register chan *connection
+	register chan *subscription
 
 	// Unregister requests from connections.
-	unregister chan *connection
+	unregister chan *subscription
 }
 
-var h = hub{
-	broadcast:   make(chan []byte),
-	register:    make(chan *connection),
-	unregister:  make(chan *connection),
-	connections: make(map[*connection]bool),
+// The global, singleton Hub object. This manages all our connections.
+var Hub = hub{
+	broadcast:  make(chan Message),
+	register:   make(chan *subscription),
+	unregister: make(chan *subscription),
+	rooms:      make(map[string]map[*connection]bool),
 }
 
-func (h *hub) run() {
+func (h *hub) Run() {
 	for {
 		select {
-		case c := <-h.register:
-			h.connections[c] = true
-		case c := <-h.unregister:
-			if _, ok := h.connections[c]; ok {
-				delete(h.connections, c)
-				close(c.send)
+		case sub := <-h.register:
+			connections := h.rooms[sub.room]
+			if connections == nil {
+				connections = make(map[*connection]bool)
+				h.rooms[sub.room] = connections
+			}
+			connections[sub.conn] = true
+		case sub := <-h.unregister:
+			connections := h.rooms[sub.room]
+
+			if connections != nil {
+				if _, ok := connections[sub.conn]; ok {
+					delete(connections, sub.conn)
+					close(sub.conn.send)
+					if len(connections) == 0 {
+						// Last person left the room.
+						delete(h.rooms, sub.room)
+					}
+				}
 			}
 		case m := <-h.broadcast:
-			for c := range h.connections {
+			connections := h.rooms[m.room]
+			for c := range connections {
 				select {
-				case c.send <- m:
+				case c.send <- m.rawdata:
 				default:
 					close(c.send)
-					delete(h.connections, c)
+					delete(connections, c)
+					if len(connections) == 0 {
+						delete(h.rooms, m.room)
+					}
 				}
 			}
 		}

@@ -7,3 +7,4 @@ a chat channel, etc.
 
 */
 
+package table

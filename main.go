@@ -27,8 +27,11 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Parse()
-	go h.run()
+	go channels.Hub.Run()
 	http.HandleFunc("/", serveHome)
+	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, r.URL.Path[1:])
+	})
 	http.HandleFunc("/ws", channels.ServeWs)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {

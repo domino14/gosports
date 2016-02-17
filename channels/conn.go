@@ -2,9 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package channels
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -34,57 +35,73 @@ var upgrader = websocket.Upgrader{
 type connection struct {
 	// The websocket connection.
 	ws *websocket.Conn
-
 	// Buffered channel of outbound messages.
 	send chan []byte
 }
 
 // readPump pumps messages from the websocket connection to the hub.
-func (c *connection) readPump() {
+func (s *subscription) readPump() {
 	defer func() {
-		h.unregister <- c
-		c.ws.Close()
+		Hub.unregister <- s
+		s.conn.ws.Close()
 	}()
-	c.ws.SetReadLimit(maxMessageSize)
-	c.ws.SetReadDeadline(time.Now().Add(pongWait))
-	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	s.conn.ws.SetReadLimit(maxMessageSize)
+	s.conn.ws.SetReadDeadline(time.Now().Add(pongWait))
+	s.conn.ws.SetPongHandler(func(string) error {
+		s.conn.ws.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
 	for {
-		_, message, err := c.ws.ReadMessage()
+		_, message, err := s.conn.ws.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Printf("error: %v", err)
-			}
+			/** XXX: Reenable when we update the websocket package. */
+
+			/*			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+						log.Printf("error: %v", err)
+					}*/
+			log.Printf("error: %v", err)
 			break
 		}
-		h.broadcast <- message
+		// Parse as JSON.
+		var m Message
+		err = json.Unmarshal(message, &m)
+		if err != nil {
+			log.Printf("error unmarshaling: %v", err)
+			break
+		}
+		// Save raw data for this message for further processing.
+		// XXX: we'll end up unmarshalling twice.
+		m.rawdata = message
+		m.room = s.room
+		Hub.broadcast <- m
 	}
 }
 
 // write writes a message with the given message type and payload.
-func (c *connection) write(mt int, payload []byte) error {
-	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
-	return c.ws.WriteMessage(mt, payload)
+func (s *subscription) write(mt int, payload []byte) error {
+	s.conn.ws.SetWriteDeadline(time.Now().Add(writeWait))
+	return s.conn.ws.WriteMessage(mt, payload)
 }
 
 // writePump pumps messages from the hub to the websocket connection.
-func (c *connection) writePump() {
+func (s *subscription) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.ws.Close()
+		s.conn.ws.Close()
 	}()
 	for {
 		select {
-		case message, ok := <-c.send:
+		case message, ok := <-s.conn.send:
 			if !ok {
-				c.write(websocket.CloseMessage, []byte{})
+				s.write(websocket.CloseMessage, []byte{})
 				return
 			}
-			if err := c.write(websocket.TextMessage, message); err != nil {
+			if err := s.write(websocket.TextMessage, message); err != nil {
 				return
 			}
 		case <-ticker.C:
-			if err := c.write(websocket.PingMessage, []byte{}); err != nil {
+			if err := s.write(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
 		}
@@ -98,8 +115,17 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
+	// Get room from query params here. Later add a signature/timestamp
+	// or session token for validating.
+	room := r.URL.Query().Get("room")
+	if len(room) == 0 {
+		log.Println("Rejected, no room")
+		return
+	}
+
 	c := &connection{send: make(chan []byte, 256), ws: ws}
-	h.register <- c
-	go c.writePump()
-	c.readPump()
+	s := &subscription{conn: c, room: room}
+	Hub.register <- s
+	go s.writePump()
+	s.readPump()
 }
