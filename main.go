@@ -6,7 +6,11 @@ import (
 	"net/http"
 	"text/template"
 
+	"github.com/gorilla/rpc/v2"
+	"github.com/gorilla/rpc/v2/json2"
+
 	"github.com/domino14/gosports/channels"
+	"github.com/domino14/gosports/wordwalls"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
@@ -33,6 +37,12 @@ func main() {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
 	http.HandleFunc("/ws", channels.ServeWs)
+
+	s := rpc.NewServer()
+	s.RegisterCodec(json2.NewCodec(), "application/json")
+	s.RegisterService(new(wordwalls.WordwallsService), "")
+	http.Handle("/rpc", s)
+
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

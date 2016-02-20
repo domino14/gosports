@@ -5,10 +5,26 @@
 <script type="text/javascript">
     $(function() {
 
-    var conn;
+    function randomUsername() {
+        var nouns, adjectives;
+        nouns = [
+            "zebra", "monkey", "einstein", "fire", "metal", "lira",
+            "foxtrot", "torment", "ligo", "kek", "cement", "lamar"
+        ];
+        adjectives = [
+            "facetious", "frayed", "historic", "lovely", "demented", "happy",
+            "hangry", "swacked", "fiery", "itchy", "dumb", "antediluvian"
+        ];
+        function randomArray(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+        return randomArray(adjectives) + '_' + randomArray(nouns);
+    }
+
+    var conn, username;
     var msg = $("#msg");
     var log = $("#log");
-
+    username = ""
     function appendLog(msg) {
         var d = log[0]
         var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
@@ -35,7 +51,8 @@
     });
 
     if (window["WebSocket"]) {
-        conn = new WebSocket("ws://{{$}}/ws?room=foobar");
+        conn = new WebSocket("ws://{{$}}/ws?room=foobar&username=" +
+            randomUsername());
         conn.onclose = function(evt) {
             appendLog($("<div><b>Connection closed.</b></div>"))
         }

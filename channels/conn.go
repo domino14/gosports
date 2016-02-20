@@ -5,10 +5,17 @@
 package channels
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -29,6 +36,13 @@ const (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	// XXX: Later check Aerolith.org or something. We will be on different
+	// ports but we should still accept.
+	// (or maybe socket.aerolith.org?)
+	CheckOrigin: func(r *http.Request) bool {
+		log.Println("[DEBUG] In CheckOrigin, will return true.")
+		return true
+	},
 }
 
 // connection is an middleman between the websocket connection and the hub.
@@ -36,7 +50,8 @@ type connection struct {
 	// The websocket connection.
 	ws *websocket.Conn
 	// Buffered channel of outbound messages.
-	send chan []byte
+	send     chan []byte
+	username string
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -66,13 +81,22 @@ func (s *subscription) readPump() {
 		var m Message
 		err = json.Unmarshal(message, &m)
 		if err != nil {
-			log.Printf("error unmarshaling: %v", err)
+			log.Println("error unmarshaling: ", err)
 			break
 		}
-		// Save raw data for this message for further processing.
-		// XXX: we'll end up unmarshalling twice.
-		m.rawdata = message
+		// Save raw data for this message for further processing, but append
+		// username.
+		// XXX: we'll end up unmarshalling twice. We should re-think this later.
 		m.room = s.room
+		m.From = s.conn.username
+		// Remarshal to m.rawdata
+		rawdata, err := json.Marshal(m)
+		if err != nil {
+			log.Println("Error re-marshalling: ", err)
+			break
+		}
+		log.Println("[DEBUG] raw:", string(rawdata))
+		m.rawdata = rawdata
 		Hub.broadcast <- m
 	}
 }
@@ -108,6 +132,54 @@ func (s *subscription) writePump() {
 	}
 }
 
+func validateWsRequest(v url.Values, now int64) error {
+	secretKey := os.Getenv("SECRET_KEY")
+	realm := v.Get("realm")
+	user := v.Get("user")
+	timestamp := v.Get("expire")
+	token := v.Get("_token")
+	// Convert token to an array of bytes. Assume token is hex encoded.
+
+	if secretKey == "" {
+		// This should be a panic but let's not go overboard.
+		// Maybe it's a too many open files issue.
+		log.Println("[ERROR] Secret key missing!")
+		return fmt.Errorf("No secret key in environment.")
+	}
+	// Convert timestamp to an int.
+	ts_int, err := strconv.Atoi(timestamp)
+	if err != nil {
+		return err
+	}
+	if int64(ts_int) < now {
+		return fmt.Errorf("your token has expired (ts = %v, now = %v)",
+			ts_int, now)
+	}
+	if realm == "" {
+		return fmt.Errorf("no realm was specified")
+	}
+	if user == "" {
+		return fmt.Errorf("no user was specified")
+	}
+	tokenHex, err := hex.DecodeString(token)
+	if err != nil {
+		return err
+	}
+
+	// Reconstruct signed string.
+	ss := fmt.Sprintf("expire=%v&realm=%v&user=%v", timestamp, realm, user)
+	log.Println("[DEBUG] Signing:", ss)
+	mac := hmac.New(sha1.New, []byte(secretKey))
+	mac.Write([]byte(ss))
+	expectedMac := mac.Sum(nil)
+	if !hmac.Equal(expectedMac, tokenHex) {
+		return fmt.Errorf(
+			"token signature was not correct (got %x, expected %x)",
+			expectedMac, tokenHex)
+	}
+	return nil
+}
+
 // serveWs handles websocket requests from the peer.
 func ServeWs(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
@@ -115,16 +187,16 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	// Get room from query params here. Later add a signature/timestamp
-	// or session token for validating.
-	room := r.URL.Query().Get("room")
-	if len(room) == 0 {
-		log.Println("Rejected, no room")
-		return
+	qvals := r.URL.Query()
+	err = validateWsRequest(qvals, time.Now().Unix())
+	if err != nil {
+		log.Println("[ERROR] Got an error:", err)
+		return // should write a rejection
 	}
-
-	c := &connection{send: make(chan []byte, 256), ws: ws}
-	s := &subscription{conn: c, room: room}
+	c := &connection{send: make(chan []byte, 256), ws: ws,
+		username: qvals.Get("user")}
+	s := &subscription{conn: c, room: qvals.Get("realm")}
+	log.Println("[DEBUG] Made new connection", c)
 	Hub.register <- s
 	go s.writePump()
 	s.readPump()

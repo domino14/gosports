@@ -1,0 +1,11 @@
+socket:
+  build: .
+  command: ./gosports
+  env_file:
+    - ./config/local_config.env
+  # Mount local directory so we can rebuild.
+  # Rebuild like `docker-compose run --rm socket go build`
+  volumes:
+    - .:/go/src/github.com/domino14/gosports
+  ports:
+    - 8125:8080

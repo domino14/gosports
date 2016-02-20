@@ -4,11 +4,14 @@
 
 package channels
 
+import "log"
+
 type Message struct {
 	Data    string `json:"data"`
 	Mtype   string `json:"type"`
 	rawdata []byte
 	room    string // This will get copied from the subscription.
+	From    string `json:"from"`
 }
 
 type subscription struct {
@@ -55,6 +58,7 @@ func (h *hub) Run() {
 
 			if connections != nil {
 				if _, ok := connections[sub.conn]; ok {
+					log.Println("[DEBUG] Unregistering", sub.conn.username)
 					delete(connections, sub.conn)
 					close(sub.conn.send)
 					if len(connections) == 0 {
@@ -69,6 +73,7 @@ func (h *hub) Run() {
 				select {
 				case c.send <- m.rawdata:
 				default:
+					log.Println("[DEBUG] Disconnecting", c.username)
 					close(c.send)
 					delete(connections, c)
 					if len(connections) == 0 {
