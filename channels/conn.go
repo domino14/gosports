@@ -10,13 +10,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -63,17 +64,17 @@ func (s *subscription) readPump() {
 	s.conn.ws.SetReadLimit(maxMessageSize)
 	s.conn.ws.SetReadDeadline(time.Now().Add(pongWait))
 	s.conn.ws.SetPongHandler(func(string) error {
+		log.Println("[DEBUG] In pong handler", s.conn.username)
 		s.conn.ws.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 	for {
 		_, message, err := s.conn.ws.ReadMessage()
 		if err != nil {
-			/** XXX: Reenable when we update the websocket package. */
 
-			/*			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-						log.Printf("error: %v", err)
-					}*/
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+				log.Printf("error: %v", err)
+			}
 			log.Printf("error: %v", err)
 			break
 		}
@@ -87,7 +88,7 @@ func (s *subscription) readPump() {
 		// Save raw data for this message for further processing, but append
 		// username.
 		// XXX: we'll end up unmarshalling twice. We should re-think this later.
-		m.room = s.room
+		m.realm = s.realm
 		m.From = s.conn.username
 		// Remarshal to m.rawdata
 		rawdata, err := json.Marshal(m)
@@ -95,9 +96,14 @@ func (s *subscription) readPump() {
 			log.Println("Error re-marshalling: ", err)
 			break
 		}
-		log.Println("[DEBUG] raw:", string(rawdata))
 		m.rawdata = rawdata
-		Hub.broadcast <- m
+		// Pass it on to the external handler.
+		Hub.handler.HandleMessage(m)
+		// For right now only PrivateMT should not be broadcast.
+		if m.Mtype != PrivateMT {
+			Hub.broadcast <- m
+		}
+
 	}
 }
 
@@ -125,6 +131,7 @@ func (s *subscription) writePump() {
 				return
 			}
 		case <-ticker.C:
+			log.Println("[DEBUG] Sending ping to", s.conn.username)
 			if err := s.write(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
@@ -180,22 +187,38 @@ func validateWsRequest(v url.Values, now int64) error {
 	return nil
 }
 
+// close connection with an error string.
+func closeMessage(ws *websocket.Conn, errStr string) {
+	// close code 1008 is used for a generic "policy violation" message.
+	msg := websocket.FormatCloseMessage(websocket.ClosePolicyViolation, errStr)
+	log.Println("[DEBUG] Writing a close message of", string(msg))
+	err := ws.WriteMessage(websocket.CloseMessage, msg)
+	if err != nil {
+		log.Println("[ERROR] Could not write message back to user", err)
+	}
+	ws.Close()
+	return
+}
+
 // serveWs handles websocket requests from the peer.
 func ServeWs(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
+		// http.Error(w, "Unable to upgrade", 426)
 		return
 	}
 	qvals := r.URL.Query()
 	err = validateWsRequest(qvals, time.Now().Unix())
 	if err != nil {
 		log.Println("[ERROR] Got an error:", err)
-		return // should write a rejection
+		closeMessage(ws, err.Error())
+		return
+
 	}
 	c := &connection{send: make(chan []byte, 256), ws: ws,
 		username: qvals.Get("user")}
-	s := &subscription{conn: c, room: qvals.Get("realm")}
+	s := &subscription{conn: c, realm: Realm(qvals.Get("realm"))}
 	log.Println("[DEBUG] Made new connection", c)
 	Hub.register <- s
 	go s.writePump()

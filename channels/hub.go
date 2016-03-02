@@ -4,26 +4,23 @@
 
 package channels
 
-import "log"
-
-type Message struct {
-	Data    string `json:"data"`
-	Mtype   string `json:"type"`
-	rawdata []byte
-	room    string // This will get copied from the subscription.
-	From    string `json:"from"`
-}
+import (
+	"encoding/json"
+	"log"
+)
 
 type subscription struct {
-	conn *connection
-	room string
+	conn  *connection
+	realm Realm
 }
+
+type Realm string
 
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
 type hub struct {
 	// Registered connections.
-	rooms map[string]map[*connection]bool
+	realms map[Realm]map[*connection]bool
 
 	// Inbound messages from the connections.
 	broadcast chan Message
@@ -33,6 +30,9 @@ type hub struct {
 
 	// Unregister requests from connections.
 	unregister chan *subscription
+
+	// A handler of messages.
+	handler SocketMessageHandler
 }
 
 // The global, singleton Hub object. This manages all our connections.
@@ -40,22 +40,49 @@ var Hub = hub{
 	broadcast:  make(chan Message),
 	register:   make(chan *subscription),
 	unregister: make(chan *subscription),
-	rooms:      make(map[string]map[*connection]bool),
+	realms:     make(map[Realm]map[*connection]bool),
 }
 
-func (h *hub) Run() {
+func BroadcastMessage(realm Realm, mt string, msg string) {
+	Hub.broadcastMessage(realm, mt, msg)
+}
+
+func (h *hub) broadcastMessage(realm Realm, mt string, msg string) {
+	var msgWrapper Message
+	msgWrapper = Message{
+		Data:  msg,
+		Mtype: MessageType(mt),
+		realm: realm,
+	}
+	rawdata, err := json.Marshal(msgWrapper)
+	if err != nil {
+		log.Println("[ERROR] JSON encoding - broadcasting message", err)
+		return
+	}
+	msgWrapper.rawdata = rawdata
+	log.Println("[DEBUG] Writing a message, rawdata:",
+		string(msgWrapper.rawdata))
+	h.broadcast <- msgWrapper
+}
+
+func (h *hub) Run(handler SocketMessageHandler) {
+	h.handler = handler
 	for {
 		select {
 		case sub := <-h.register:
-			connections := h.rooms[sub.room]
+			connections := h.realms[sub.realm]
+			newRoom := false
 			if connections == nil {
+				newRoom = true
 				connections = make(map[*connection]bool)
-				h.rooms[sub.room] = connections
+				h.realms[sub.realm] = connections
+				h.handler.RealmCreation(sub.realm)
 			}
+			h.handler.RealmJoin(sub.realm, sub.conn.username, newRoom)
 			connections[sub.conn] = true
 		case sub := <-h.unregister:
-			connections := h.rooms[sub.room]
-
+			connections := h.realms[sub.realm]
+			h.handler.RealmLeave(sub.realm, sub.conn.username)
 			if connections != nil {
 				if _, ok := connections[sub.conn]; ok {
 					log.Println("[DEBUG] Unregistering", sub.conn.username)
@@ -63,12 +90,12 @@ func (h *hub) Run() {
 					close(sub.conn.send)
 					if len(connections) == 0 {
 						// Last person left the room.
-						delete(h.rooms, sub.room)
+						delete(h.realms, sub.realm)
 					}
 				}
 			}
 		case m := <-h.broadcast:
-			connections := h.rooms[m.room]
+			connections := h.realms[m.realm]
 			for c := range connections {
 				select {
 				case c.send <- m.rawdata:
@@ -77,7 +104,7 @@ func (h *hub) Run() {
 					close(c.send)
 					delete(connections, c)
 					if len(connections) == 0 {
-						delete(h.rooms, m.room)
+						delete(h.realms, m.realm)
 					}
 				}
 			}

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"text/template"
 
-	"github.com/gorilla/rpc/v2"
-	"github.com/gorilla/rpc/v2/json2"
+	// "github.com/gorilla/rpc/v2"
+	// "github.com/gorilla/rpc/v2/json2"
 
 	"github.com/domino14/gosports/channels"
 	"github.com/domino14/gosports/wordwalls"
@@ -31,17 +31,17 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Parse()
-	go channels.Hub.Run()
+	go channels.Hub.Run(wordwalls.MessageHandler)
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
 	http.HandleFunc("/ws", channels.ServeWs)
 
-	s := rpc.NewServer()
-	s.RegisterCodec(json2.NewCodec(), "application/json")
-	s.RegisterService(new(wordwalls.WordwallsService), "")
-	http.Handle("/rpc", s)
+	// s := rpc.NewServer()
+	// s.RegisterCodec(json2.NewCodec(), "application/json")
+	// s.RegisterService(new(wordwalls.WordwallsService), "")
+	// http.Handle("/rpc", s)
 
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
