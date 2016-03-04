@@ -21,6 +21,10 @@ func (m *Message) Realm() Realm {
 	return m.realm
 }
 
+func (m *Message) SetRealm(realm Realm) {
+	m.realm = realm
+}
+
 type SocketMessageHandler interface {
 	// HandleMessage must take in a message and perform some sort of
 	// action with it.
@@ -32,4 +36,13 @@ type SocketMessageHandler interface {
 	RealmJoin(realm Realm, user string, firstUser bool)
 	// On the leaving of a realm, run some code
 	RealmLeave(realm Realm, user string)
+}
+
+// SocketMessageSender is an interface that will send messages from our
+// server to one or more websockets.
+type SocketMessageSender interface {
+	// Broadcast a message to all available sockets.
+	BroadcastMessage(realm Realm, mt MessageType, msg string)
+	// Send a message to just one single player.
+	SendMessage(realm Realm, mt MessageType, msg string, to string)
 }

@@ -43,15 +43,15 @@ var Hub = hub{
 	realms:     make(map[Realm]map[*connection]bool),
 }
 
-func BroadcastMessage(realm Realm, mt string, msg string) {
+func BroadcastMessage(realm Realm, mt MessageType, msg string) {
 	Hub.broadcastMessage(realm, mt, msg)
 }
 
-func (h *hub) broadcastMessage(realm Realm, mt string, msg string) {
+func (h *hub) broadcastMessage(realm Realm, mt MessageType, msg string) {
 	var msgWrapper Message
 	msgWrapper = Message{
 		Data:  msg,
-		Mtype: MessageType(mt),
+		Mtype: mt,
 		realm: realm,
 	}
 	rawdata, err := json.Marshal(msgWrapper)
