@@ -113,6 +113,11 @@ func (s *gameState) guess(data string, user string) *CorrectAnswer {
 	return nil
 }
 
+func (gs *gamestatePopulation) scores(table channels.Realm) map[string]int {
+	state := gs.getState(table)
+	return state.scores
+}
+
 // XXX: does this have to be * for the mutex to work?
 func (gs *gamestatePopulation) wordListID(table channels.Realm) int {
 	state := gs.getState(table)

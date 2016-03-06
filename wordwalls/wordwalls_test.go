@@ -107,7 +107,6 @@ func joinSitting(users []string, realm channels.Realm) {
 func requestStart(users []string, realm channels.Realm) { // All request start.
 	doneCh := make(chan string, len(users))
 	for _, user := range users {
-		// shadow inner loop variable for closure.
 		go func(user string) {
 			msg := channels.Message{
 				Data:  "start",
@@ -137,4 +136,47 @@ func TestSimpleGame(t *testing.T) {
 	joinSitting(users, realm)
 	log.Printf("[DEBUG] About to start.")
 	requestStart(users, realm)
+
+	words := []string{"ROAMINGS", "APIMANIA", "OPPUGNER", "LATHERED",
+		"MIDWIVES", "COLORFUL", "SEAWEEDS", "LIKEABLY", "HALTERED", "BLINDAGE",
+		"REEDITED", "SETIFORM", "BOUNDARY", "TRENCHES", "FINAGLED", "MOTHBALL",
+		"BARRACKS", "TERAPHIM", "MOUCHING", "UPCOMING", "UNFETTER", "FLUTTERY",
+		"VERITIES", "SUNDECKS", "SEESAWED", "RIVIERES", "EUPHRASY", "GHARIALS",
+		"SHAMMING", "KIDNAPER", "FOILISTS", "CHURNERS", "QUINTALS", "EXPENSES",
+		"KIPPERER", "DECENTLY", "CAMISOLE", "IMMESHED", "UNSTACKS", "CUMQUATS",
+		"BEQUESTS", "ORGANISM", "HUGGIEST", "EPONYMIC", "HITHERTO", "VOLPLANE",
+		"HUISACHE", "RIFFRAFF", "QUOINING", "ANTIHERO", "OUTSMOKE", "SEAWARES",
+		"STOPPLED"}
+	// Have all users guess all words.
+	doneCh := make(chan string, len(users)*len(words))
+	for _, word := range words {
+		for _, user := range users {
+
+			go func(user string, word string) {
+				msg := channels.Message{
+					Data:  word,
+					Mtype: channels.MessageType(GuessMT),
+					From:  user,
+				}
+				msg.SetRealm(realm)
+				MessageHandler.HandleMessage(msg)
+				doneCh <- user
+			}(user, word)
+
+		}
+	}
+	for i := 0; i < len(users)*len(words); i++ {
+		// Drain the channel.
+		log.Printf("[DEBUG] Draining %s\n", <-doneCh)
+	}
+	scores := gameStates.scores(realm)
+	log.Printf("Scores: %v", scores)
+	sum := 0
+	for _, score := range scores {
+		sum += score
+	}
+	if sum != 53 {
+		t.Errorf("Score total should have been 53.")
+	}
+
 }
