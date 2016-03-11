@@ -94,7 +94,7 @@ func joinSitting(users []string, realm channels.Realm) {
 	for _, user := range users {
 		go func(user string) {
 			// Set "firstUser" to true to make user sit.
-			MessageHandler.RealmJoin(realm, user, true)
+			MessageHandler.RealmJoin(realm, user, user+"dummyconnid", true)
 			doneCh <- user
 		}(user)
 	}
@@ -124,19 +124,7 @@ func requestStart(users []string, realm channels.Realm) { // All request start.
 	}
 }
 
-// Test a whole game with 4 players. Use concurrency.
-func TestSimpleGame(t *testing.T) {
-	realm := toRealm(tablenum)
-	// Set mock so we don't connect to external API.
-	MessageHandler.webolith = &MockWebolithCommunicator{}
-	MessageHandler.sender = &MockMessageSender{}
-
-	MessageHandler.RealmCreation(realm)
-	users := []string{"cesar", "messi", "xavi", "iniesta"}
-	joinSitting(users, realm)
-	log.Printf("[DEBUG] About to start.")
-	requestStart(users, realm)
-
+func guessWords(users []string, realm channels.Realm) {
 	words := []string{"ROAMINGS", "APIMANIA", "OPPUGNER", "LATHERED",
 		"MIDWIVES", "COLORFUL", "SEAWEEDS", "LIKEABLY", "HALTERED", "BLINDAGE",
 		"REEDITED", "SETIFORM", "BOUNDARY", "TRENCHES", "FINAGLED", "MOTHBALL",
@@ -166,9 +154,31 @@ func TestSimpleGame(t *testing.T) {
 		}
 	}
 	for i := 0; i < len(users)*len(words); i++ {
-		// Drain the channel.
-		log.Printf("[DEBUG] Draining %s\n", <-doneCh)
+		<-doneCh
 	}
+
+}
+
+// Test a whole game with 4 players. Use concurrency.
+func TestSimpleGame(t *testing.T) {
+	gameStates.reset()
+	users.reset()
+	realm := toRealm(tablenum)
+	// Set mock so we don't connect to external API.
+	MessageHandler.webolith = &MockWebolithCommunicator{}
+	MessageHandler.sender = &MockMessageSender{}
+
+	MessageHandler.RealmCreation(realm)
+	userlist := []string{"cesar", "messi", "xavi", "iniesta"}
+	joinSitting(userlist, realm)
+	log.Printf("[DEBUG] About to start.")
+	requestStart(userlist, realm)
+	startAllowed := users.allowStart(realm)
+	if !startAllowed {
+		t.Fatalf("Should have been allowed to start")
+	}
+	guessWords(userlist, realm)
+
 	scores := gameStates.scores(realm)
 	log.Printf("Scores: %v", scores)
 	sum := 0
@@ -179,4 +189,30 @@ func TestSimpleGame(t *testing.T) {
 		t.Errorf("Score total should have been 53.")
 	}
 
+}
+
+func TestSameUserStart(t *testing.T) {
+	gameStates.reset()
+	users.reset()
+	realm := toRealm(tablenum)
+	// Set mock so we don't connect to external API.
+	MessageHandler.webolith = &MockWebolithCommunicator{}
+	MessageHandler.sender = &MockMessageSender{}
+
+	MessageHandler.RealmCreation(realm)
+	userlist := []string{"cesar", "cesar", "cesar", "cesar"}
+	joinSitting(userlist, realm)
+	log.Printf("[DEBUG] About to start.")
+	requestStart(userlist, realm)
+	startAllowed := users.allowStart(realm)
+	if !startAllowed {
+		t.Fatalf("Should have been allowed to start")
+	}
+	guessWords(userlist, realm)
+
+	scores := gameStates.scores(realm)
+	log.Printf("Scores: %v", scores)
+	if scores["cesar"] != 53 {
+		t.Errorf("Score for cesar should have been 53.")
+	}
 }

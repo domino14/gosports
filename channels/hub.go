@@ -78,11 +78,13 @@ func (h *hub) Run(handler SocketMessageHandler) {
 				h.realms[sub.realm] = connections
 				h.handler.RealmCreation(sub.realm)
 			}
-			h.handler.RealmJoin(sub.realm, sub.conn.username, newRoom)
+
+			h.handler.RealmJoin(sub.realm, sub.conn.username, sub.conn.id, 
+				newRoom)
 			connections[sub.conn] = true
 		case sub := <-h.unregister:
 			connections := h.realms[sub.realm]
-			h.handler.RealmLeave(sub.realm, sub.conn.username)
+			h.handler.RealmLeave(sub.realm, sub.conn.username, sub.conn.id)
 			if connections != nil {
 				if _, ok := connections[sub.conn]; ok {
 					log.Println("[DEBUG] Unregistering", sub.conn.username)

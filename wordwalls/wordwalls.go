@@ -109,17 +109,18 @@ func (m wwMessageHandler) RealmCreation(table channels.Realm) {
 // On joining a table, set users for this table.
 // firstUser is true if this is the first user to join.
 func (m wwMessageHandler) RealmJoin(table channels.Realm, user string,
-	firstUser bool) {
+	connId string, firstUser bool) {
 	state := stWatching
 	if firstUser {
 		state = stSitting
 	}
-	users.add(table, user, state)
+	users.add(table, user, state, connId)
 }
 
 // On leaving a table, remove from the list of users for this table.
-func (m wwMessageHandler) RealmLeave(table channels.Realm, user string) {
-	users.remove(table, user)
+func (m wwMessageHandler) RealmLeave(table channels.Realm, user string,
+	connId string) {
+	users.remove(table, user, connId)
 	users.RLock()
 	log.Printf("After RealmLeave: %v\n", users.userMap[table])
 	users.RUnlock()

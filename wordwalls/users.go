@@ -9,6 +9,11 @@ import (
 
 type UserState int
 
+type UserInfo struct {
+	connIds map[string]bool
+	state   UserState
+}
+
 const (
 	// A user who wants to play has clicked start. They can only click
 	// start if they are sitting. If they are watching they have no
@@ -20,7 +25,7 @@ const (
 
 type userPopulation struct {
 	sync.RWMutex
-	userMap map[channels.Realm]map[string]UserState
+	userMap map[channels.Realm]map[string]*UserInfo
 }
 
 func (u UserState) String() string {
@@ -38,35 +43,52 @@ func (u UserState) String() string {
 var users userPopulation
 
 func init() {
-	users.userMap = make(map[channels.Realm]map[string]UserState)
+	users.reset()
 }
 
 func toRealm(tbl string) channels.Realm {
 	return channels.Realm(tbl)
 }
 
+func (u *userPopulation) reset() {
+	users.userMap = make(map[channels.Realm]map[string]*UserInfo)
+}
+
 func (u *userPopulation) add(table channels.Realm, username string,
-	state UserState) {
-	log.Printf("Adding user %s to table %s in state %v\n", username, table,
-		state)
+	state UserState, connId string) {
+	log.Printf("Adding user %s to table %s in state %v, connId %s\n", username,
+		table, state, connId)
 	u.Lock()
 	defer u.Unlock()
 	usersHere := u.userMap[table]
 	if usersHere == nil {
-		usersHere = make(map[string]UserState)
+		usersHere = make(map[string]*UserInfo)
 		u.userMap[table] = usersHere
 	}
-	usersHere[username] = state
+	uInfo := usersHere[username]
+	if uInfo == nil {
+		uInfo = &UserInfo{}
+		uInfo.connIds = make(map[string]bool)
+	}
+	uInfo.connIds[connId] = true
+	uInfo.state = state
 }
 
-func (u *userPopulation) remove(table channels.Realm, username string) {
-	log.Printf("Removing user %s from table %s\n", username, table)
+func (u *userPopulation) remove(table channels.Realm, username string,
+	connId string) {
+	log.Printf("Removing user %s from table %s, connId %s\n", username, table,
+		connId)
 	u.Lock()
 	defer u.Unlock()
 	usersHere := u.userMap[table]
 	if usersHere != nil {
-		// XXX: Error check?
-		delete(usersHere, username)
+		uInfo := usersHere[username]
+		if uInfo != nil {
+			delete(uInfo.connIds, connId)
+			if len(uInfo.connIds) == 0 {
+				delete(usersHere, username)
+			}
+		}
 	}
 	log.Printf("Users here: %v, count: %d\n", u.userMap[table],
 		len(u.userMap[table]))
@@ -84,16 +106,18 @@ func (u *userPopulation) allowStart(table channels.Realm) bool {
 	numWantToPlay := 0
 	numWatching := 0
 	numTotal := len(usersHere)
-	for _, state := range usersHere {
-		if state == stWantsToPlay {
+	for _, user := range usersHere {
+		if user.state == stWantsToPlay {
 			numWantToPlay++
-		} else if state == stWatching {
+		} else if user.state == stWatching {
 			numWatching++
 		}
 	}
 	log.Printf("Want to play: %v, watching: %v, total: %v\n",
 		numWantToPlay, numWatching, numTotal)
-	return numWantToPlay > 0 && numWantToPlay+numWatching == numTotal
+	allow := numWantToPlay > 0 && numWantToPlay+numWatching == numTotal
+	log.Printf("Allow returning: %v", allow)
+	return allow
 }
 
 func (u *userPopulation) wantsToPlay(table channels.Realm, username string) {
@@ -116,9 +140,10 @@ func (u *userPopulation) modifyState(table channels.Realm, username string,
 	u.Lock()
 	defer u.Unlock()
 	usersHere := u.userMap[table]
-	if _, ok := usersHere[username]; ok {
-		usersHere[username] = state
+	if uInfo, ok := usersHere[username]; ok {
+		uInfo.state = state
 	} else {
-		log.Printf("[ERROR] User %s not in table %s\n", username, table)
+		log.Printf("[ERROR] User %s not in table %s (%v)\n", username, table,
+			usersHere)
 	}
 }

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/satori/go.uuid"
 )
 
 const (
@@ -53,6 +54,7 @@ type connection struct {
 	// Buffered channel of outbound messages.
 	send     chan []byte
 	username string
+	id       string
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -216,8 +218,12 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-	c := &connection{send: make(chan []byte, 256), ws: ws,
-		username: qvals.Get("user")}
+	c := &connection{
+		send:     make(chan []byte, 256),
+		ws:       ws,
+		username: qvals.Get("user"),
+		id:       uuid.NewV4().String(),
+	}
 	s := &subscription{conn: c, realm: Realm(qvals.Get("realm"))}
 	log.Println("[DEBUG] Made new connection", c)
 	Hub.register <- s
