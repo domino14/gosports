@@ -1,0 +1,779 @@
+[
+  {
+    "question": "BEEQSSTU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "BEQUESTS",
+        "f_inner": false,
+        "def": "BEQUEST, a legacy (something bequeathed) [n]"
+      }
+    ],
+    "probability": 23692
+  },
+  {
+    "question": "CDEELNTY",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "DECENTLY",
+        "f_inner": false,
+        "def": "DECENT, conforming to recognized standards of propriety [adv]"
+      }
+    ],
+    "probability": 11702
+  },
+  {
+    "question": "EKMOOSTU",
+    "answers": [
+      {
+        "b_hooks": "DS",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "OUTSMOKE",
+        "f_inner": false,
+        "def": "to surpass in smoking [v OUTSMOKED, OUTSMOKING, OUTSMOKES]"
+      }
+    ],
+    "probability": 17109
+  },
+  {
+    "question": "CGHIMNOU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "MOUCHING",
+        "f_inner": true,
+        "def": "MOUCH, to mooch (to obtain without paying) [v]"
+      }
+    ],
+    "probability": 20240
+  },
+  {
+    "question": "CFLLOORU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "COLORFUL",
+        "f_inner": false,
+        "def": "full of color [adj]"
+      }
+    ],
+    "probability": 24891
+  },
+  {
+    "question": "DELOPPST",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "STOPPLED",
+        "f_inner": true,
+        "def": "STOPPLE, to stopper (to plug (to seal or close with a plug (a piece of material used to fill a hole))) [v]"
+      }
+    ],
+    "probability": 19412
+  },
+  {
+    "question": "ACMQSTUU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "CUMQUATS",
+        "f_inner": false,
+        "def": "CUMQUAT, kumquat (a citrus fruit) [n]"
+      }
+    ],
+    "probability": 26693
+  },
+  {
+    "question": "DEEHIMMS",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "IMMESHED",
+        "f_inner": false,
+        "def": "IMMESH, to enmesh (to ensnare or entangle in a net) [v]"
+      }
+    ],
+    "probability": 22928
+  },
+  {
+    "question": "AFFFFIRR",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "RIFFRAFF",
+        "f_inner": false,
+        "def": "the disreputable element of society [n RIFFRAFFS]"
+      }
+    ],
+    "probability": 27947
+  },
+  {
+    "question": "ACKNSSTU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "UNSTACKS",
+        "f_inner": false,
+        "def": "UNSTACK, to remove from a stack [v]"
+      }
+    ],
+    "probability": 24341
+  },
+  {
+    "question": "AGIMNORS",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "ORGANISM",
+        "f_inner": false,
+        "def": "any form of animal or plant life [n ORGANISMS]"
+      },
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "+",
+        "word": "ROAMINGS",
+        "f_inner": false,
+        "def": "ROAMING, the use of a cell phone outside its local area [n]"
+      }
+    ],
+    "probability": 2796
+  },
+  {
+    "question": "ADEEHLRT",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "HALTERED",
+        "f_inner": true,
+        "def": "HALTER, to put restraint upon [v]"
+      },
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "BS",
+        "symbols": "",
+        "word": "LATHERED",
+        "f_inner": false,
+        "def": "LATHER, to cover with lather (a light foam) [v]"
+      }
+    ],
+    "probability": 2196
+  },
+  {
+    "question": "AABCKRRS",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "BARRACKS",
+        "f_inner": true,
+        "def": "BARRACK, to shout boisterously [v]"
+      }
+    ],
+    "probability": 25961
+  },
+  {
+    "question": "DEIIMSVW",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "MIDWIVES",
+        "f_inner": false,
+        "def": "MIDWIFE, to assist a woman in childbirth [v]"
+      }
+    ],
+    "probability": 18866
+  },
+  {
+    "question": "EEIKPPRR",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "KIPPERER",
+        "f_inner": false,
+        "def": "one that kippers (to cure fish by salting and smoking) [n KIPPERERS]"
+      }
+    ],
+    "probability": 25144
+  },
+  {
+    "question": "ADEEESSW",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "SEAWEEDS",
+        "f_inner": false,
+        "def": "SEAWEED, a plant growing in the sea [n]"
+      },
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "SEESAWED",
+        "f_inner": false,
+        "def": "SEESAW, to move up and down or back and forth [v]"
+      }
+    ],
+    "probability": 16752
+  },
+  {
+    "question": "CEIMNOPY",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "EPONYMIC",
+        "f_inner": false,
+        "def": "EPONYM, the person for whom something is named [adj]"
+      }
+    ],
+    "probability": 14924
+  },
+  {
+    "question": "EEIIRSTV",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "VERITIES",
+        "f_inner": false,
+        "def": "VERITY, truth (conformity to fact or reality) [n]"
+      }
+    ],
+    "probability": 2523
+  },
+  {
+    "question": "ACEILMOS",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "CAMISOLE",
+        "f_inner": false,
+        "def": "a brief negligee [n CAMISOLES]"
+      }
+    ],
+    "probability": 2875
+  },
+  {
+    "question": "ABEIKLLY",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "+",
+        "word": "LIKEABLY",
+        "f_inner": false,
+        "def": "LIKEABLE, likable (pleasant (pleasing)) [adv]"
+      }
+    ],
+    "probability": 22434
+  },
+  {
+    "question": "AEHINORT",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "ANTIHERO",
+        "f_inner": false,
+        "def": "a protagonist who is notably lacking in heroic qualities [n ANTIHEROES]"
+      }
+    ],
+    "probability": 27
+  },
+  {
+    "question": "EEENPSSX",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "EXPENSES",
+        "f_inner": false,
+        "def": "EXPENSE, to charge with costs [v]"
+      }
+    ],
+    "probability": 24584
+  },
+  {
+    "question": "AGHIMMNS",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "SHAMMING",
+        "f_inner": true,
+        "def": "SHAM, to feign (to pretend (to assume or display a false appearance of)) [v]"
+      }
+    ],
+    "probability": 24499
+  },
+  {
+    "question": "EEIIRRSV",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "RIVIERES",
+        "f_inner": false,
+        "def": "RIVIERE, a necklace of precious stones [n]"
+      }
+    ],
+    "probability": 8292
+  },
+  {
+    "question": "EFLRTTUY",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "FLUTTERY",
+        "f_inner": false,
+        "def": "marked by fluttering [adj FLUTTERIER, FLUTTERIEST]"
+      }
+    ],
+    "probability": 17797
+  },
+  {
+    "question": "CEHNRRSU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "CHURNERS",
+        "f_inner": false,
+        "def": "CHURNER, one that churns (to stir briskly in order to make butter) [n]"
+      }
+    ],
+    "probability": 17800
+  },
+  {
+    "question": "GIINNOQU",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "QUOINING",
+        "f_inner": false,
+        "def": "the materials (as stones or bricks) used to form an external corner of a building [n QUOININGS]\nQUOIN, to secure with a type of wedge [v]"
+      }
+    ],
+    "probability": 19348
+  },
+  {
+    "question": "ADEIKNPR",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "KIDNAPER",
+        "f_inner": false,
+        "def": "one that kidnaps (to take a person by force and often for ransom) [n KIDNAPERS]"
+      }
+    ],
+    "probability": 5095
+  },
+  {
+    "question": "CEEHNRST",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "TRENCHES",
+        "f_inner": false,
+        "def": "TRENCH, to dig a long, narrow excavation in the ground [v]"
+      }
+    ],
+    "probability": 8523
+  },
+  {
+    "question": "EHHIORTT",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "T",
+        "symbols": "",
+        "word": "HITHERTO",
+        "f_inner": false,
+        "def": "up to now [adv]"
+      }
+    ],
+    "probability": 14254
+  },
+  {
+    "question": "AELLNOPV",
+    "answers": [
+      {
+        "b_hooks": "DS",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "VOLPLANE",
+        "f_inner": false,
+        "def": "to glide in an airplane [v VOLPLANED, VOLPLANING, VOLPLANES]"
+      }
+    ],
+    "probability": 12743
+  },
+  {
+    "question": "EEFNRTTU",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "UNFETTER",
+        "f_inner": false,
+        "def": "to free from fetters [v UNFETTERED, UNFETTERING, UNFETTERS]"
+      }
+    ],
+    "probability": 7908
+  },
+  {
+    "question": "ADEFGILN",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "FINAGLED",
+        "f_inner": false,
+        "def": "FINAGLE, to obtain by trickery [v]"
+      }
+    ],
+    "probability": 2659
+  },
+  {
+    "question": "AEHPRSUY",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "EUPHRASY",
+        "f_inner": false,
+        "def": "an annual herb [n EUPHRASIES]"
+      }
+    ],
+    "probability": 15445
+  },
+  {
+    "question": "AAGHILRS",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "GHARIALS",
+        "f_inner": false,
+        "def": "GHARIAL, a large reptile (any of a class of cold-blooded, air-breathing vertebrates) [n]"
+      }
+    ],
+    "probability": 10528
+  },
+  {
+    "question": "ABHLLMOT",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "MOTHBALL",
+        "f_inner": false,
+        "def": "to put into storage [v MOTHBALLED, MOTHBALLING, MOTHBALLS]"
+      }
+    ],
+    "probability": 23602
+  },
+  {
+    "question": "CGIMNOPU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "UPCOMING",
+        "f_inner": false,
+        "def": "about to happen or appear [adj]"
+      }
+    ],
+    "probability": 20229
+  },
+  {
+    "question": "DDEEEIRT",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "P",
+        "symbols": "",
+        "word": "REEDITED",
+        "f_inner": false,
+        "def": "REEDIT, EDIT, to correct and prepare for publication [v]"
+      }
+    ],
+    "probability": 5881
+  },
+  {
+    "question": "ABDEGILN",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "BLINDAGE",
+        "f_inner": false,
+        "def": "a protective screen [n BLINDAGES]"
+      }
+    ],
+    "probability": 2651
+  },
+  {
+    "question": "AAEERSSW",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "SEAWARES",
+        "f_inner": false,
+        "def": "SEAWARE, seaweed used as fertilizer [n]"
+      }
+    ],
+    "probability": 11817
+  },
+  {
+    "question": "ACEHHISU",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "HUISACHE",
+        "f_inner": false,
+        "def": "a flowering plant [n HUISACHES]"
+      }
+    ],
+    "probability": 19929
+  },
+  {
+    "question": "EFIMORST",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "SETIFORM",
+        "f_inner": false,
+        "def": "having the form of a seta [adj]"
+      }
+    ],
+    "probability": 3070
+  },
+  {
+    "question": "FIILOSST",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "+",
+        "word": "FOILISTS",
+        "f_inner": false,
+        "def": "FOILIST, one who fences with a foil (a sword without cutting edges) [n]"
+      }
+    ],
+    "probability": 17166
+  },
+  {
+    "question": "CDEKNSSU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "SUNDECKS",
+        "f_inner": false,
+        "def": "SUNDECK, a deck that is exposed to the sun [n]"
+      }
+    ],
+    "probability": 24594
+  },
+  {
+    "question": "AILNQSTU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": true,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "QUINTALS",
+        "f_inner": false,
+        "def": "QUINTAL, a unit of weight [n]"
+      }
+    ],
+    "probability": 8678
+  },
+  {
+    "question": "AEHIMPRT",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "TERAPHIM",
+        "f_inner": false,
+        "def": "TERAPH, an image of a Semitic household god [n]"
+      }
+    ],
+    "probability": 5947
+  },
+  {
+    "question": "ABDNORUY",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "BOUNDARY",
+        "f_inner": false,
+        "def": "a dividing line [n BOUNDARIES]"
+      }
+    ],
+    "probability": 10602
+  },
+  {
+    "question": "AAAIIMNP",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "APIMANIA",
+        "f_inner": false,
+        "def": "an excessive interest in bees [n APIMANIAS]"
+      }
+    ],
+    "probability": 18772
+  },
+  {
+    "question": "EGNOPPRU",
+    "answers": [
+      {
+        "b_hooks": "S",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "",
+        "word": "OPPUGNER",
+        "f_inner": false,
+        "def": "one that oppugns (to assail with argument) [n OPPUGNERS]"
+      }
+    ],
+    "probability": 18497
+  },
+  {
+    "question": "EGGHISTU",
+    "answers": [
+      {
+        "b_hooks": "",
+        "b_inner": false,
+        "f_hooks": "",
+        "symbols": "+",
+        "word": "HUGGIEST",
+        "f_inner": false,
+        "def": "HUGGY, involving or given to hugging [adj]"
+      }
+    ],
+    "probability": 17763
+  }
+]

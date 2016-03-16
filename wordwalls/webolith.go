@@ -4,6 +4,7 @@ package wordwalls
 // for when we need to get word list, etc info.
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -18,6 +19,8 @@ import (
 type WebolithCommunicator interface {
 	// Get a path and return a body.
 	Get(path string) ([]byte, error)
+	// Post a json-encoded buffer to a path, return a body.
+	Post(path string, buf []byte) ([]byte, error)
 }
 
 type Webolith struct{}
@@ -37,14 +40,29 @@ func (w Webolith) Get(path string) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-func getWordList(wordListId int, w WebolithCommunicator) *WordList {
+func (w Webolith) Post(path string, buf []byte) ([]byte, error) {
+	webolithUrl := os.Getenv("WEBOLITH_URL")
+	if webolithUrl == "" {
+		log.Println("[ERROR] No webolith")
+		return nil, fmt.Errorf("no webolith url.")
+	}
+	resp, err := http.Post(webolithUrl+path, "application/json",
+		bytes.NewBuffer(buf))
+	if err != nil {
+		log.Println("[ERROR]", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return ioutil.ReadAll(resp.Body)
+}
+
+func getWordList(w WebolithCommunicator, wordListId int) *WordList {
 	lId := strconv.Itoa(wordListId)
-	body, err := w.Get("/base/api/wordlist/" + lId)
+	body, err := w.Get("/base/api/wordlist/" + lId + "?action=continue")
 	if err != nil {
 		log.Println("[ERROR] getting", err)
 		return nil
 	}
-	log.Println("[DEBUG]", string(body))
 	list := &WordList{}
 	err = json.Unmarshal(body, list)
 	if err != nil {
@@ -54,7 +72,30 @@ func getWordList(wordListId int, w WebolithCommunicator) *WordList {
 	return list
 }
 
-func getGameOptions(table channels.Realm, w WebolithCommunicator) *GameOptions {
+type fullQRequest struct {
+	Questions []Question `json:"questions"`
+	Lexicon   string     `json:"lexicon"`
+}
+
+func getFullQInfo(w WebolithCommunicator, questions []Question,
+	lexicon string) []FullQuestion {
+
+	fqr := fullQRequest{Questions: questions, Lexicon: lexicon}
+	qs, err := json.Marshal(fqr)
+	if err != nil {
+		log.Println("[ERROR] Marshalling in getFullQInfo", err)
+		return nil
+	}
+	body, err := w.Post("/base/api/word_db/full_questions/", qs)
+	if err != nil {
+		log.Println("[ERROR] posting", err)
+		return nil
+	}
+	log.Println("[DEBUG] Body!", string(body))
+	return nil
+}
+
+func getGameOptions(w WebolithCommunicator, table channels.Realm) *GameOptions {
 
 	body, err := w.Get("/wordwalls/api/game_options/" + string(table) + "/")
 	if err != nil {

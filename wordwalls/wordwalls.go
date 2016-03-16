@@ -48,17 +48,6 @@ type Answer struct {
 	Idx       int    `json:"i"`
 }
 
-// type StartMessage struct {
-// 	AnswerHash Answers `json:"answerHash"`
-// 	// We don't care about Questions. This will just get passed on to
-// 	// the user.
-// 	Questions  interface{} `json:"questions"`
-// 	QBegin     int         `json:"qbegin"`
-// 	QEnd       int         `json:"qend"`
-// 	QTotal     int         `json:"qtotal"`
-// 	NumAnswers int         `json:"numAnswersThisRound"`
-// }
-
 const (
 	ChatMT MessageType = "chat"
 	// The data field would be the actual command, for example "start".
@@ -102,7 +91,7 @@ func init() {
 // the hub.
 func (m wwMessageHandler) RealmCreation(table channels.Realm) {
 	state := gameStates.createState(table)
-	state.setOptions(getGameOptions(table, m.webolith))
+	state.setOptions(getGameOptions(m.webolith, table))
 	log.Println("[DEBUG] In realm creation. Game settings is now", state.options)
 }
 
@@ -143,7 +132,7 @@ func handleTableMessage(data string, table channels.Realm, user string,
 		}
 		// XXX: Check if the game has already started. We don't want to
 		// do this twice. (This could be a race condition)
-		wordList := getWordList(gameStates.wordListID(table), wc)
+		wordList := getWordList(wc, gameStates.wordListID(table))
 		if wordList == nil {
 			log.Println("[ERROR] Got nil word list, error!")
 			return
@@ -151,7 +140,8 @@ func handleTableMessage(data string, table channels.Realm, user string,
 		gameStates.setList(table, wordList)
 		qToSend := gameStates.nextSet(table, gameStates.numQuestions(table))
 		// and send questions
-		res, err := json.Marshal(qToSend)
+		fullQs := getFullQInfo(wc, qToSend, wordList.Lexicon)
+		res, err := json.Marshal(fullQs)
 		if err != nil {
 			log.Println("[ERROR] Error marshalling questions to send!", err)
 			return

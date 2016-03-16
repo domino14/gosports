@@ -68,6 +68,7 @@ func (u *userPopulation) add(table channels.Realm, username string,
 	uInfo := usersHere[username]
 	if uInfo == nil {
 		uInfo = &UserInfo{}
+		usersHere[username] = uInfo
 		uInfo.connIds = make(map[string]bool)
 	}
 	uInfo.connIds[connId] = true

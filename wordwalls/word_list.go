@@ -7,6 +7,21 @@ type Question struct {
 	Answers  []string `json:"a"`
 }
 
+type FullAnswer struct {
+	Word           string `json:"w"`
+	Definition     string `json:"d"`
+	FrontHooks     string `json:"fh"`
+	BackHooks      string `json:"bh"`
+	LexiconSymbols string `json:"s"`
+	InnerFrontHook bool   `json:"ifh"`
+	InnerBackHook  bool   `json:"ibh"`
+}
+
+type FullQuestion struct {
+	Question string       `json:"q"`
+	Answers  []FullAnswer `json:"a"`
+}
+
 type WordList struct {
 	ID int `json:"id"`
 

@@ -1,7 +1,6 @@
 package wordwalls
 
 import (
-	"log"
 	"sync"
 
 	"github.com/domino14/gosports/channels"
@@ -103,7 +102,6 @@ func (gs *gamestatePopulation) guess(data string, table channels.Realm,
 func (s *gameState) guess(data string, user string) *CorrectAnswer {
 	s.Lock()
 	defer s.Unlock()
-	log.Printf("List is %v", s.list)
 	if answer, ok := s.list.answerHash[data]; ok {
 		ca := &CorrectAnswer{}
 		ca.Answer = data
