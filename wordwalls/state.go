@@ -9,6 +9,14 @@ import (
 // This file will contain the global maps that represent game states and
 // options. The maps are protected by sync.RWMutex because maps
 // are not thread-safe by default.
+type gameGoingState int
+
+const (
+	GameInitializing = iota // Requesting all list info, etc.
+	GameCountingDown        // In 3-second countdown
+	GameStarted             // Game is going
+	GameDone                // Game is finished or has never started
+)
 
 // gameState represents the state for a single game. This has a lock
 // to protect its inner members.
@@ -16,6 +24,7 @@ type gameState struct {
 	scores  map[string]int
 	options *GameOptions
 	list    *WordList
+	going   gameGoingState
 	sync.RWMutex
 }
 
@@ -41,6 +50,8 @@ func (gs *gamestatePopulation) createState(table channels.Realm) *gameState {
 	gs.Lock()
 	defer gs.Unlock()
 	state := &gameState{}
+	// Start in the "Done" state.
+	state.going = GameDone
 	gs.stateMap[table] = state
 	return state
 }
@@ -57,29 +68,25 @@ func (s *gameState) setOptions(options *GameOptions) {
 	s.options = options
 }
 
-func (gs *gamestatePopulation) setList(table channels.Realm, list *WordList) {
-	state := gs.getState(table)
-	state.setList(list)
-}
+// func (gs *gamestatePopulation) setList(table channels.Realm, list *WordList) {
+// 	state := gs.getState(table)
+// 	state.setList(list)
+// }
 
 func (s *gameState) setList(list *WordList) {
-	s.Lock()
-	defer s.Unlock()
 	s.list = list
 	// Make a new scores map too.
 	s.scores = make(map[string]int)
 }
 
-func (gs *gamestatePopulation) nextSet(table channels.Realm,
-	numQuestions int) []Question {
+// func (gs *gamestatePopulation) nextSet(table channels.Realm,
+// 	numQuestions int) []Question {
 
-	state := gs.getState(table)
-	return state.nextQuestionSet(numQuestions)
-}
+// 	state := gs.getState(table)
+// 	return state.nextQuestionSet(numQuestions)
+// }
 
 func (s *gameState) nextQuestionSet(numQuestions int) []Question {
-	s.Lock()
-	defer s.Unlock()
 	if s.list == nil {
 		return nil
 	}
@@ -123,23 +130,46 @@ func (gs *gamestatePopulation) scores(table channels.Realm) map[string]int {
 }
 
 // XXX: does this have to be * for the mutex to work?
-func (gs *gamestatePopulation) wordListID(table channels.Realm) int {
+// func (gs *gamestatePopulation) wordListID(table channels.Realm) int {
+// 	state := gs.getState(table)
+// 	state.RLock()
+// 	defer state.RUnlock()
+// 	return state.options.WordListID
+// }
+
+// func (gs *gamestatePopulation) numQuestions(table channels.Realm) int {
+// 	state := gs.getState(table)
+// 	state.RLock()
+// 	defer state.RUnlock()
+// 	return state.options.QuestionsToPull
+// }
+
+// func (gs *gamestatePopulation) exists(table channels.Realm) bool {
+// 	state := gs.getState(table)
+// 	state.RLock()
+// 	defer state.RUnlock()
+// 	return state.options != nil
+// }
+
+func (gs *gamestatePopulation) timer(table channels.Realm) int {
 	state := gs.getState(table)
 	state.RLock()
 	defer state.RUnlock()
-	return state.options.WordListID
+	return state.options.TimerSecs
 }
 
-func (gs *gamestatePopulation) numQuestions(table channels.Realm) int {
-	state := gs.getState(table)
-	state.RLock()
-	defer state.RUnlock()
-	return state.options.QuestionsToPull
-}
+// func (gs *gamestatePopulation) setGameGoing(table channels.Realm,
+// 	gg gameGoingState) {
 
-func (gs *gamestatePopulation) exists(table channels.Realm) bool {
+// 	state := gs.getState(table)
+// 	state.Lock()
+// 	defer state.Unlock()
+// 	state.going = gg
+// }
+
+func (gs *gamestatePopulation) getGameGoing(table channels.Realm) gameGoingState {
 	state := gs.getState(table)
 	state.RLock()
 	defer state.RUnlock()
-	return state.options != nil
+	return state.going
 }

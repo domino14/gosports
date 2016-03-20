@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/domino14/gosports/channels"
 	"github.com/satori/go.uuid"
@@ -98,6 +99,8 @@ func requestStart(users []string, realm channels.Realm) { // All request start.
 }
 
 func guessWords(users []string, realm channels.Realm) {
+	countdown := time.NewTimer(time.Second * (time.Duration(CountdownTime) + 1))
+	<-countdown.C
 	words := []string{"ROAMINGS", "APIMANIA", "OPPUGNER", "LATHERED",
 		"MIDWIVES", "COLORFUL", "SEAWEEDS", "LIKEABLY", "HALTERED", "BLINDAGE",
 		"REEDITED", "SETIFORM", "BOUNDARY", "TRENCHES", "FINAGLED", "MOTHBALL",

@@ -3,6 +3,8 @@ package wordwalls
 import (
 	"encoding/json"
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/domino14/gosports/channels"
 )
@@ -10,8 +12,17 @@ import (
 type GameType string
 
 const (
-	Challenge GameType = "challenge"
-	Regular   GameType = "regular"
+	Challenge     GameType = "challenge"
+	Regular       GameType = "regular"
+	CountdownTime int      = 3
+)
+
+const (
+	FailureSettingsDoNotExist = "SETTINGS_DONT_EXIST"
+	FailureNotAllowed         = "START_NOT_ALLOWED"
+	FailureNullWordList       = "NULL_WORD_LIST"
+	FailureQuestionInfo       = "QUESTION_INFO"
+	FailureGameGoing          = "GAME_GOING"
 )
 
 type GameOptions struct {
@@ -117,42 +128,108 @@ func (m wwMessageHandler) RealmLeave(table channels.Realm, user string,
 
 func handleTableMessage(data string, table channels.Realm, user string,
 	wc WebolithCommunicator, sender channels.SocketMessageSender) {
+
 	switch data {
 	case "start":
-		if !gameStates.exists(table) {
-			// XXX: This should always be really quick but maybe once in a
-			// while it'll fail; should prompt user to try again
-			log.Println("[ERROR] Settings for this table do not yet exist!")
-			return
-		}
-		users.wantsToPlay(table, user)
-		if !users.allowStart(table) {
-			log.Println("[DEBUG] Start not yet allowed.")
-			return
-		}
-		// XXX: Check if the game has already started. We don't want to
-		// do this twice. (This could be a race condition)
-		wordList := getWordList(wc, gameStates.wordListID(table))
-		if wordList == nil {
-			log.Println("[ERROR] Got nil word list, error!")
-			return
-		}
-		gameStates.setList(table, wordList)
-		qToSend := gameStates.nextSet(table, gameStates.numQuestions(table))
-		// and send questions
-		fullQs := getFullQInfo(wc, qToSend, wordList.Lexicon)
-		res, err := json.Marshal(fullQs)
-		if err != nil {
-			log.Println("[ERROR] Error marshalling questions to send!", err)
-			return
-		}
-		sender.BroadcastMessage(table, channels.MessageType("questions"),
-			string(res))
+		handleStart(table, user, wc, sender)
 	}
+}
+
+// handle a Start message. We set a lock when someone clicks Start
+// to prevent race conditions.
+func handleStart(table channels.Realm, user string, wc WebolithCommunicator,
+	sender channels.SocketMessageSender) {
+	log.Println("[DEBUG] In handleStart....")
+	sendFail := func(errorCode string) {
+		sender.BroadcastMessage(table, channels.MessageType("fail"), errorCode)
+	}
+	// XXX: Set a lock for this table on start.
+	st := gameStates.getState(table)
+	st.Lock()
+	defer st.Unlock()
+
+	if st.options == nil {
+		// XXX: This should always be really quick but maybe once in a
+		// while it'll fail; should prompt user to try again
+		log.Println("[ERROR] Settings for this table do not yet exist!")
+		sendFail(FailureSettingsDoNotExist)
+		return
+	}
+	users.wantsToPlay(table, user)
+	if !users.allowStart(table) {
+		log.Println("[DEBUG] Start not yet allowed.")
+		sendFail(FailureNotAllowed)
+		return
+	}
+
+	if st.going != GameDone {
+		log.Println("[DEBUG] This game is going or about to start.")
+		sendFail(FailureGameGoing)
+		return
+	}
+	st.going = GameInitializing
+	wordList := getWordList(wc, st.options.WordListID)
+	if wordList == nil {
+		log.Println("[ERROR] Got nil word list, error!")
+		sendFail(FailureNullWordList)
+		return
+	}
+	st.setList(wordList)
+	qToSend := st.nextQuestionSet(st.options.QuestionsToPull)
+	// Turn the raw alphagrams into full question objects.
+	fullQResponse, err := getFullQInfo(wc, qToSend, wordList.Lexicon)
+	if err != nil {
+		log.Println("[ERROR] Error getting full Q response!", err)
+		sendFail(FailureQuestionInfo)
+		return
+	}
+	log.Println("[DEBUG] Got full Q response:", string(fullQResponse))
+	countdown := time.NewTimer(time.Second * time.Duration(CountdownTime))
+
+	ct := strconv.Itoa(CountdownTime)
+	st.going = GameCountingDown
+	sender.BroadcastMessage(table, channels.MessageType("countdown"), ct)
+	// Countdown before starting game.
+	// We should not accept guesses until the game has started.
+	go handleGameTimer(table, countdown, string(fullQResponse), sender)
+	log.Println("[DEBUG] Leaving start, mutex should unlock.")
+}
+
+func handleGameTimer(table channels.Realm, countdown *time.Timer,
+	questionsToSend string, sender channels.SocketMessageSender) {
+
+	<-countdown.C
+	log.Println("[DEBUG] Finished counting down! About to send qs...")
+	st := gameStates.getState(table)
+	st.Lock()
+	defer st.Unlock()
+	st.going = GameStarted
+	sender.BroadcastMessage(table, channels.MessageType("questions"),
+		questionsToSend)
+	sender.BroadcastMessage(table, channels.MessageType("timer"),
+		strconv.Itoa(st.options.TimerSecs))
+	// Start another nested goroutine here for game over. This looks
+	// messy, but it seems easy enough to do.
+	gameOver := time.NewTimer(time.Second * time.Duration(st.options.TimerSecs))
+	go func() {
+		<-gameOver.C
+		log.Println("[DEBUG] This game is over!")
+		st := gameStates.getState(table)
+		st.Lock()
+		defer st.Unlock()
+		st.going = GameDone
+		sender.BroadcastMessage(table, channels.MessageType("gameover"), "")
+	}()
 }
 
 func handleGuess(data string, table channels.Realm, user string,
 	sender channels.SocketMessageSender) {
+
+	if gameStates.getGameGoing(table) != GameStarted {
+		log.Println("[DEBUG] Got a guess when game had not started.")
+		return
+	}
+
 	answer := gameStates.guess(data, table, user)
 	if answer == nil {
 		return

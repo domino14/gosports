@@ -78,21 +78,20 @@ type fullQRequest struct {
 }
 
 func getFullQInfo(w WebolithCommunicator, questions []Question,
-	lexicon string) []FullQuestion {
+	lexicon string) ([]byte, error) {
 
 	fqr := fullQRequest{Questions: questions, Lexicon: lexicon}
 	qs, err := json.Marshal(fqr)
 	if err != nil {
 		log.Println("[ERROR] Marshalling in getFullQInfo", err)
-		return nil
+		return nil, err
 	}
 	body, err := w.Post("/base/api/word_db/full_questions/", qs)
 	if err != nil {
 		log.Println("[ERROR] posting", err)
-		return nil
+		return nil, err
 	}
-	log.Println("[DEBUG] Body!", string(body))
-	return nil
+	return body, nil
 }
 
 func getGameOptions(w WebolithCommunicator, table channels.Realm) *GameOptions {
