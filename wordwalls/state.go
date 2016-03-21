@@ -1,7 +1,9 @@
 package wordwalls
 
 import (
+	"log"
 	"sync"
+	"time"
 
 	"github.com/domino14/gosports/channels"
 )
@@ -21,10 +23,12 @@ const (
 // gameState represents the state for a single game. This has a lock
 // to protect its inner members.
 type gameState struct {
-	scores  map[string]int
-	options *GameOptions
-	list    *WordList
-	going   gameGoingState
+	scores         map[string]int
+	options        *GameOptions
+	list           *WordList
+	going          gameGoingState
+	countdownTimer *time.Timer
+	gameTimer      *time.Timer
 	sync.RWMutex
 }
 
@@ -49,12 +53,54 @@ func (gs *gamestatePopulation) reset() {
 func (gs *gamestatePopulation) createState(table channels.Realm) *gameState {
 	gs.Lock()
 	defer gs.Unlock()
+
+	log.Println("[DEBUG] In createState: %v", table)
 	state := &gameState{}
 	// Start in the "Done" state.
 	state.going = GameDone
 	gs.stateMap[table] = state
 	return state
 }
+
+// Send a save command to the API for the word list, prior
+// to quitting, cancel timers as well.
+func (gs *gamestatePopulation) cleanlyStopGame(table channels.Realm,
+	w WebolithCommunicator) {
+
+	st := gs.getState(table)
+
+	st.Lock()
+	defer st.Unlock()
+	st.list.saveProgress(w)
+	st.cancelTimers()
+}
+
+// Cleanly delete the state for this wordwalls game. We want to stop
+// the game.
+//
+// We want to do this in such a way so that this locks the re-creation of
+// this state until it is done deleting.
+//
+// XXX: TODO: A periodic function that deletes stale states. We won't
+// delete them with a function here due to sync issues.
+
+// func (gs *gamestatePopulation) deleteState(table channels.Realm) {
+// 	gs.Lock()
+// 	defer gs.Unlock()
+
+// 	log.Println("[DEBUG] In deleteState: %v", table)
+// 	state, ok := gs.stateMap[table]
+// 	state.Lock()
+// 	defer state.Unlock()
+// 	if !ok {
+// 		log.Println("[ERROR] Going to delete table from state map, but it "+
+// 			"is not there!", table)
+// 		return
+// 	}
+// 	state.cancelTimers()
+// 	delete(gs.stateMap, table)
+
+// }
 
 func (gs *gamestatePopulation) getState(table channels.Realm) *gameState {
 	gs.RLock()
@@ -68,23 +114,11 @@ func (s *gameState) setOptions(options *GameOptions) {
 	s.options = options
 }
 
-// func (gs *gamestatePopulation) setList(table channels.Realm, list *WordList) {
-// 	state := gs.getState(table)
-// 	state.setList(list)
-// }
-
 func (s *gameState) setList(list *WordList) {
 	s.list = list
 	// Make a new scores map too.
 	s.scores = make(map[string]int)
 }
-
-// func (gs *gamestatePopulation) nextSet(table channels.Realm,
-// 	numQuestions int) []Question {
-
-// 	state := gs.getState(table)
-// 	return state.nextQuestionSet(numQuestions)
-// }
 
 func (s *gameState) nextQuestionSet(numQuestions int) []Question {
 	if s.list == nil {
@@ -129,28 +163,6 @@ func (gs *gamestatePopulation) scores(table channels.Realm) map[string]int {
 	return state.scores
 }
 
-// XXX: does this have to be * for the mutex to work?
-// func (gs *gamestatePopulation) wordListID(table channels.Realm) int {
-// 	state := gs.getState(table)
-// 	state.RLock()
-// 	defer state.RUnlock()
-// 	return state.options.WordListID
-// }
-
-// func (gs *gamestatePopulation) numQuestions(table channels.Realm) int {
-// 	state := gs.getState(table)
-// 	state.RLock()
-// 	defer state.RUnlock()
-// 	return state.options.QuestionsToPull
-// }
-
-// func (gs *gamestatePopulation) exists(table channels.Realm) bool {
-// 	state := gs.getState(table)
-// 	state.RLock()
-// 	defer state.RUnlock()
-// 	return state.options != nil
-// }
-
 func (gs *gamestatePopulation) timer(table channels.Realm) int {
 	state := gs.getState(table)
 	state.RLock()
@@ -158,18 +170,30 @@ func (gs *gamestatePopulation) timer(table channels.Realm) int {
 	return state.options.TimerSecs
 }
 
-// func (gs *gamestatePopulation) setGameGoing(table channels.Realm,
-// 	gg gameGoingState) {
-
-// 	state := gs.getState(table)
-// 	state.Lock()
-// 	defer state.Unlock()
-// 	state.going = gg
-// }
-
 func (gs *gamestatePopulation) getGameGoing(table channels.Realm) gameGoingState {
 	state := gs.getState(table)
 	state.RLock()
 	defer state.RUnlock()
 	return state.going
+}
+
+// Since this timer is set while the game state is locked, we call it
+// as a method on gameState
+func (s *gameState) setCountdownTimer(ct *time.Timer) {
+	s.countdownTimer = ct
+}
+
+func (s *gameState) setGameTimer(t *time.Timer) {
+	s.gameTimer = t
+}
+
+func (s *gameState) cancelTimers() {
+	if s.gameTimer != nil {
+		cl1 := s.gameTimer.Stop()
+		log.Printf("[DEBUG] Canceling gameTimer: %v", cl1)
+	}
+	if s.countdownTimer != nil {
+		cl2 := s.countdownTimer.Stop()
+		log.Printf("[DEBUG] Canceling countdownTimer: %v", cl2)
+	}
 }

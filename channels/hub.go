@@ -79,7 +79,7 @@ func (h *hub) Run(handler SocketMessageHandler) {
 				h.handler.RealmCreation(sub.realm)
 			}
 
-			h.handler.RealmJoin(sub.realm, sub.conn.username, sub.conn.id, 
+			h.handler.RealmJoin(sub.realm, sub.conn.username, sub.conn.id,
 				newRoom)
 			connections[sub.conn] = true
 		case sub := <-h.unregister:
@@ -93,6 +93,7 @@ func (h *hub) Run(handler SocketMessageHandler) {
 					if len(connections) == 0 {
 						// Last person left the room.
 						delete(h.realms, sub.realm)
+						h.handler.RealmDeletion(sub.realm)
 					}
 				}
 			}

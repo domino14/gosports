@@ -32,6 +32,9 @@ type SocketMessageHandler interface {
 	// On the creation of a realm, run some optional initialization
 	// code provided by the implementer of this interface.
 	RealmCreation(realm Realm)
+	// On the deletion of a realm, run some optional teardown code
+	// provided by the implementer of this interface.
+	RealmDeletion(realm Realm)
 	// On the joining of a realm, run some code.
 	RealmJoin(realm Realm, user string, connId string, firstUser bool)
 	// On the leaving of a realm, run some code

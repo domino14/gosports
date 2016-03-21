@@ -66,3 +66,8 @@ func (w *WordList) generateAnswerHash(questions []Question) {
 		}
 	}
 }
+
+// Save progress in this word list.
+func (w *WordList) saveProgress(wc WebolithCommunicator) {
+	syncWordList(wc, w)
+}

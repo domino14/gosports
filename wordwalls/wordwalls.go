@@ -64,6 +64,13 @@ const (
 	// The data field would be the actual command, for example "start".
 	TableMT MessageType = "tableCmd"
 	GuessMT MessageType = "guess"
+
+	CountdownMT channels.MessageType = "countdown"
+	QuestionsMT channels.MessageType = "questions"
+	TimerMT     channels.MessageType = "timer"
+	GameOverMT  channels.MessageType = "gameover"
+	ScoreMT     channels.MessageType = "score"
+	FailMT      channels.MessageType = "fail"
 )
 
 func (s wwMessageSender) BroadcastMessage(realm channels.Realm,
@@ -98,12 +105,19 @@ func init() {
 
 // On the creation of a new realm (table) get info about the game options
 // for it.
-// RealmCreation should only get called once due to the channels in
-// the hub.
+// RealmCreation should only get called once (concurrently) due to the
+// channels in the hub.
 func (m wwMessageHandler) RealmCreation(table channels.Realm) {
 	state := gameStates.createState(table)
 	state.setOptions(getGameOptions(m.webolith, table))
 	log.Println("[DEBUG] In realm creation. Game settings is now", state.options)
+}
+
+// On the deletion of a realm, clean up any timers, end games, save
+// lists in progress, etc.
+func (m wwMessageHandler) RealmDeletion(table channels.Realm) {
+	gameStates.cleanlyStopGame(table, m.webolith)
+	log.Println("[DEBUG] In realm deletion.")
 }
 
 // On joining a table, set users for this table.
@@ -141,7 +155,7 @@ func handleStart(table channels.Realm, user string, wc WebolithCommunicator,
 	sender channels.SocketMessageSender) {
 	log.Println("[DEBUG] In handleStart....")
 	sendFail := func(errorCode string) {
-		sender.BroadcastMessage(table, channels.MessageType("fail"), errorCode)
+		sender.BroadcastMessage(table, FailMT, errorCode)
 	}
 	// XXX: Set a lock for this table on start.
 	st := gameStates.getState(table)
@@ -185,10 +199,9 @@ func handleStart(table channels.Realm, user string, wc WebolithCommunicator,
 	}
 	log.Println("[DEBUG] Got full Q response:", string(fullQResponse))
 	countdown := time.NewTimer(time.Second * time.Duration(CountdownTime))
-
-	ct := strconv.Itoa(CountdownTime)
+	st.setCountdownTimer(countdown)
 	st.going = GameCountingDown
-	sender.BroadcastMessage(table, channels.MessageType("countdown"), ct)
+	sender.BroadcastMessage(table, CountdownMT, strconv.Itoa(CountdownTime))
 	// Countdown before starting game.
 	// We should not accept guesses until the game has started.
 	go handleGameTimer(table, countdown, string(fullQResponse), sender)
@@ -204,13 +217,12 @@ func handleGameTimer(table channels.Realm, countdown *time.Timer,
 	st.Lock()
 	defer st.Unlock()
 	st.going = GameStarted
-	sender.BroadcastMessage(table, channels.MessageType("questions"),
-		questionsToSend)
-	sender.BroadcastMessage(table, channels.MessageType("timer"),
-		strconv.Itoa(st.options.TimerSecs))
+	sender.BroadcastMessage(table, QuestionsMT, questionsToSend)
+	sender.BroadcastMessage(table, TimerMT, strconv.Itoa(st.options.TimerSecs))
 	// Start another nested goroutine here for game over. This looks
 	// messy, but it seems easy enough to do.
 	gameOver := time.NewTimer(time.Second * time.Duration(st.options.TimerSecs))
+	st.setGameTimer(gameOver)
 	go func() {
 		<-gameOver.C
 		log.Println("[DEBUG] This game is over!")
@@ -218,7 +230,7 @@ func handleGameTimer(table channels.Realm, countdown *time.Timer,
 		st.Lock()
 		defer st.Unlock()
 		st.going = GameDone
-		sender.BroadcastMessage(table, channels.MessageType("gameover"), "")
+		sender.BroadcastMessage(table, GameOverMT, "")
 	}()
 }
 
@@ -239,8 +251,7 @@ func handleGuess(data string, table channels.Realm, user string,
 	if err != nil {
 		log.Println("[ERROR] Marshalling answer", answer, err)
 	}
-	sender.BroadcastMessage(table, channels.MessageType("score"),
-		string(msg))
+	sender.BroadcastMessage(table, ScoreMT, string(msg))
 }
 
 type Alphagram struct {

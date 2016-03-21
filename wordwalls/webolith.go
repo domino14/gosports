@@ -110,3 +110,8 @@ func getGameOptions(w WebolithCommunicator, table channels.Realm) *GameOptions {
 	}
 	return gameOptions
 }
+
+// Synchronize word list state with the API.
+func syncWordList(w WebolithCommunicator, list *WordList) {
+
+}
